@@ -25,7 +25,8 @@ class AwsSnapper(object):
             'volumes_managed': 0,
             'snaps_created': 0,
             'snaps_deleted': 0,
-            'problem_volumes': list()
+            'problem_volumes': list(),
+            'snapped_volumes': list(),
         }
 
     def _load_config(self):
@@ -142,6 +143,7 @@ class AwsSnapper(object):
                     snapshot.create_tags(Tags=[{'Key': 'Name', 'Value': short_description},
                                                {'Key': 'snapshot_tool', 'Value': self.tag_prefix}])
                     self.report['snaps_created'] += 1
+                    self.report['snapped_volumes'].append(volume.id)
                 else:
                     # too soon
                     pass
@@ -167,6 +169,11 @@ class AwsSnapper(object):
             >    Instances managed: {instances_managed}
             >    Volumes managed: {volumes_managed}
             """.format(**self.report))
+
+        if len(self.report['snapped_volumes']):
+            report += '> \n> \n> Volumes snapshotted:\n'
+            for vol in self.report['snapped_volumes']:
+                report += '>   * {}\n'.format(vol)
 
         if len(self.report['problem_volumes']) > 0:
             report += '> \n> \n> Volumes with tag combinations preventing snapshot management:\n'
